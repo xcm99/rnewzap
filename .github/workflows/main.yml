@@ -5,6 +5,9 @@ on:
     - cron: '0 15 * * *'  # 每天北京时间 23:00 运行
   workflow_dispatch:
 
+permissions:
+  contents: write
+  
 jobs:
   renew:
     runs-on: ubuntu-latest
@@ -372,3 +375,18 @@ jobs:
           delete_workflow_pattern: ${{ github.workflow }}
           retain_days: 0
           keep_minimum_runs: 3
+
+      - name: Heartbeat commit
+        if: always()
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          git pull origin main || true
+
+          echo "Last run: $(date -u)" > heartbeat.txt
+
+          git add heartbeat.txt
+          git commit -m "heartbeat $(date -u)" || echo "No changes"
+
+          git push origin HEAD:main
