@@ -145,7 +145,7 @@ def detect_turnstile_type(sb) -> str:
         print(f"[WARN] 检测类型出错: {e}")
         return "visible"  # 出错时默认 visible，更安全
 
-def wait_turnstile_complete(sb, timeout: int = 60) -> str:
+def wait_turnstile_complete(sb, timeout: int = 30) -> str:
     """
     等待 Turnstile 完成
     返回: "token", "closed", "timeout"
@@ -327,7 +327,12 @@ def login(sb, user: str, pwd: str, idx: int) -> bool:
                 print("[INFO] ✅ 登录成功")
                 return True
             # --- 替换结束 ---
-            
+            # --- 修改处：如果这是最后一次尝试依然失败 ---
+            if attempt == 2:
+                print(f"[CRITICAL] 账号 {mask(user)} 连续 3 次登录失败。")
+                notify(False, "登录死循环", f"账号 {mask(user)} 尝试 3 次均未跳转成功，脚本强制退出以节省时间。")
+                sys.exit(1) # 直接退出脚本，不再跑后续账号 
+                
             print(f"[WARN] 尝试 {attempt + 1}: 登录未成功")
             
         except Exception as e:
@@ -554,9 +559,19 @@ def main():
     
     display = setup_display()
     results, last_shot = [], None
+    consecutive_failures = 0  # --- 新增：连续失败计数器 ---    
     
     try:
-        opts = {"uc": True, "test": True, "locale": "en", "headed": not is_linux()}
+        # --- 修改处：优化 UC 模式参数 ---
+        opts = {
+            "uc": True, 
+            "test": True, 
+            "locale": "en", 
+            "no_sandbox": True,    # 必须
+            "incognito": True,     # 隐身模式，防止缓存干扰
+            "headless2": True,     # 核心：使用 SeleniumBase 更隐蔽的无头模式
+        }
+        # ------------------------------
         if proxy:
             opts["proxy"] = proxy
             print("[INFO] 使用代理模式")
@@ -566,6 +581,18 @@ def main():
                 try:
                     r = process(sb, u, p, i)
                     results.append(r)
+                    # --- 修改处：检测连续失败 ---
+                    if r.get("success"):
+                        consecutive_failures = 0 # 只要有一个成功就重置
+                    else:
+                        consecutive_failures += 1
+                        
+                    if consecutive_failures >= 2:
+                        print("[CRITICAL] 连续 2 个账号操作失败，疑似验证码逻辑失效或被封 IP。")
+                        notify(False, "风险预警", "检测到连续 2 个账号登录失败，脚本已自动关停。")
+                        break # 跳出账号循环
+                    # --------------------------  
+                    
                     if r.get("final_screenshot"):
                         last_shot = r["final_screenshot"]
                     time.sleep(3)
