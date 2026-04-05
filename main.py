@@ -567,7 +567,6 @@ def main():
             "uc": True, 
             "test": True, 
             "locale": "en", 
-            "no_sandbox": True,    # 必须
             "incognito": True,     # 隐身模式，防止缓存干扰
             "headless2": True,     # 核心：使用 SeleniumBase 更隐蔽的无头模式
         }
