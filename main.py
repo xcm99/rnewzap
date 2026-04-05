@@ -571,13 +571,13 @@ def main():
         with SB(**opts) as sb:
             for i, (u, p) in enumerate(accounts, 1):
 
-            # 检查运行时间：1200 秒 = 20 分钟
-            current_elapsed = time.time() - start_run_time
-            if current_elapsed > 1200:
-                msg = f"已运行 {int(current_elapsed/60)} 分钟，达到 20 分钟预设上限，强制退出。"
-                print(f"[CRITICAL] {msg}")
-                notify(False, "时限到达", msg)
-                break # 跳出账号循环，进入最后的 summary 阶段            
+                # 检查运行时间：1200 秒 = 20 分钟
+                current_elapsed = time.time() - start_run_time
+                if current_elapsed > 1200:
+                    msg = f"已运行 {int(current_elapsed/60)} 分钟，达到 20 分钟预设上限，强制退出。"
+                    print(f"[CRITICAL] {msg}")
+                    notify(False, "时限到达", msg)
+                    break # 跳出账号循环，进入最后的 summary 阶段            
                 try:
                     r = process(sb, u, p, i)
                     results.append(r)
