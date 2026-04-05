@@ -562,15 +562,7 @@ def main():
     consecutive_failures = 0  # --- 新增：连续失败计数器 ---    
     
     try:
-        # --- 修改处：优化 UC 模式参数 ---
-        opts = {
-            "uc": True, 
-            "test": True, 
-            "locale": "en", 
-            "incognito": True,     # 隐身模式，防止缓存干扰
-            "headless2": True,     # 核心：使用 SeleniumBase 更隐蔽的无头模式
-        }
-        # ------------------------------
+        opts = {"uc": True, "test": True, "locale": "en", "headed": not is_linux()}   
         if proxy:
             opts["proxy"] = proxy
             print("[INFO] 使用代理模式")
